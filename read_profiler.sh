@@ -11,11 +11,8 @@ SIZES=(1 2 4 8 16 32 64 128 256 512 1024)
 NUM_RUNS=25
 COOLDOWN_TIME=2
 
-SRC_FILENAME="bitmask_read.cu"
-BIN_FILENAME="bitmask_read"
-
-# compile tested binary
-nvcc "$SRC_FILENAME" -o "$BIN_FILENAME" -O3 -arch sm_80
+make clean
+make
 
 set +x
 
