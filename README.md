@@ -17,7 +17,7 @@ computation took 3.019296ms
 
 ### Profiling Invariants
 
-Certain options (such as cuda thread/block counts) are `#define`'d at the top of the CUDA source files. A few invariants must be upheld when running these files.
+Certain options (such as cuda thread/block counts) are `#define`'d at the top of the CUDA source files. A few invariants must be upheld when building these files.
 
 - Thread size must be evenly divisble by 32 in order to ensure that all warps are fully populated with threads.
 - Data size must be evenly divisble by 32 when running bitfield profiling.
