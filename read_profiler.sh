@@ -14,6 +14,8 @@ COOLDOWN_TIME=2
 make clean
 make
 
+BIN_FILENAME=bitmask_read
+
 set +x
 
 echo "size,bool,bit"

@@ -11,6 +11,6 @@ all: $(BIN_FILES)
 	$(NVCC) $^ -o $@ $(CUDAFLAGS)
 
 clean:
-	rm $(BIN_FILES)
+	rm -f $(BIN_FILES)
 
 .phony: clean
