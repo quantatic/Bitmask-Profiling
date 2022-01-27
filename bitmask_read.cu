@@ -8,6 +8,10 @@
 #define NUM_THREADS 128
 #define NUM_BLOCKS 128
 
+#define CUDA_CALL(x) do { if((x)!=cudaSuccess) { \
+    printf("Error at %s:%d\n",__FILE__,__LINE__);\
+    return EXIT_FAILURE;}} while(0)
+
 __global__ void maskBool(const int *input, const bool *mask, int *output, int n) {
 	int index = (blockIdx.x * blockDim.x) + threadIdx.x;
 	int stride = blockDim.x * gridDim.x;
@@ -101,36 +105,37 @@ int main(int argc, char **argv) {
 	int *deviceBitMask;
 	bool *deviceMask;
 	if(useBit) {
-		cudaMalloc(&deviceBitMask, sizeof(int) * numElements / MASK_SIZE);
-		cudaMemcpy(deviceBitMask, bitMask, sizeof(int) * numElements / MASK_SIZE, cudaMemcpyHostToDevice);
+		CUDA_CALL(cudaMalloc(&deviceBitMask, sizeof(int) * numElements / MASK_SIZE));
+		CUDA_CALL(cudaMemcpy(deviceBitMask, bitMask, sizeof(int) * numElements / MASK_SIZE, cudaMemcpyHostToDevice));
 	} else {
-		cudaMalloc(&deviceMask, numElements * sizeof(bool));
-		cudaMemcpy(deviceMask, mask, numElements * sizeof(bool), cudaMemcpyHostToDevice);
+		CUDA_CALL(cudaMalloc(&deviceMask, numElements * sizeof(bool)));
+		CUDA_CALL(cudaMemcpy(deviceMask, mask, numElements * sizeof(bool), cudaMemcpyHostToDevice));
 	}
 
 	int *deviceInput = nullptr;
 	int *deviceOutput = nullptr;
 
-	cudaMalloc(&deviceInput, numElements * sizeof(int));
-	cudaMalloc(&deviceOutput, numElements * sizeof(int));
+	CUDA_CALL(cudaMalloc(&deviceInput, numElements * sizeof(int)));
+	CUDA_CALL(cudaMalloc(&deviceOutput, numElements * sizeof(int)));
 
-	cudaMemcpy(deviceInput, input, numElements * sizeof(int), cudaMemcpyHostToDevice);
+	CUDA_CALL(cudaMemcpy(deviceInput, input, numElements * sizeof(int), cudaMemcpyHostToDevice));
 
 	cudaEvent_t start, stop;
-	cudaEventCreate(&start);
-	cudaEventCreate(&stop);
+	CUDA_CALL(cudaEventCreate(&start));
+	CUDA_CALL(cudaEventCreate(&stop));
 
-	cudaEventRecord(start);
+	CUDA_CALL(cudaEventRecord(start));
 	if(useBit) {
 		maskBit<<<NUM_BLOCKS, NUM_THREADS>>>(deviceInput, deviceBitMask, deviceOutput, numElements);
 	} else {
 		maskBool<<<NUM_BLOCKS, NUM_THREADS>>>(deviceInput, deviceMask, deviceOutput, numElements);
 	}
-	cudaEventRecord(stop);
-	cudaDeviceSynchronize();
+	CUDA_CALL(cudaEventRecord(stop));
+	CUDA_CALL(cudaPeekAtLastError());
+	CUDA_CALL(cudaDeviceSynchronize());
 
 	int *actualOutput = new int[numElements];
-	cudaMemcpy(actualOutput, deviceOutput, numElements * sizeof(int), cudaMemcpyDeviceToHost);
+	CUDA_CALL(cudaMemcpy(actualOutput, deviceOutput, numElements * sizeof(int), cudaMemcpyDeviceToHost));
 
 	for(int i = 0; i < numElements; i++) {
 		if(expectedOutput[i] != actualOutput[i]) {
@@ -140,8 +145,8 @@ int main(int argc, char **argv) {
 	}
 
 	float msElapsed;
-	cudaEventSynchronize(stop);
-	cudaEventElapsedTime(&msElapsed, start, stop);
+	CUDA_CALL(cudaEventSynchronize(stop));
+	CUDA_CALL(cudaEventElapsedTime(&msElapsed, start, stop));
 
 	printf("computation took %fms\n", msElapsed);
 }

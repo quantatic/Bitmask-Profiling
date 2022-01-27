@@ -151,9 +151,11 @@ int main(int argc, char **argv) {
 		dropoutBool<<<NUM_BLOCKS, NUM_THREADS>>>(numElements, deviceInput, deviceMask, deviceOutput);
 	}
 	CUDA_CALL(cudaEventRecord(stop));
+	CUDA_CALL(cudaPeekAtLastError());
     CUDA_CALL(cudaDeviceSynchronize());
 
     cudaRand<<<NUM_BLOCKS, NUM_THREADS>>>(numElements, deviceRandValues);
+	CUDA_CALL(cudaPeekAtLastError());
     CUDA_CALL(cudaDeviceSynchronize());
 
     bool *mask = nullptr;
@@ -214,8 +216,8 @@ int main(int argc, char **argv) {
 	}
 
 	float msElapsed;
-	cudaEventSynchronize(stop);
-	cudaEventElapsedTime(&msElapsed, start, stop);
+	CUDA_CALL(cudaEventSynchronize(stop));
+	CUDA_CALL(cudaEventElapsedTime(&msElapsed, start, stop));
 
 	printf("computation took %fms\n", msElapsed);
 }
